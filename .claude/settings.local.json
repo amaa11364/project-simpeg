@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /home/ikipsiliwangi-simpeg/htdocs/simpeg.ikipsiliwangi.ac.id/ref/*.csv)",
+      "Bash(php artisan:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
