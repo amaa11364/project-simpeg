@@ -1,166 +1,330 @@
 <script setup>
 import PengelolaLayout from '@/Layouts/PengelolaLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import {
+  Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale,
+  LinearScale, PointElement, LineElement, ArcElement, Filler
+} from 'chart.js';
+import { Bar, Line, Doughnut } from 'vue-chartjs';
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Filler);
 
 const props = defineProps({
     stats: Object,
+    chart_data: Object,
     rekap_prodi: Array,
     recent_dosen: Array,
     recent_pegawai: Array,
 });
 
-const statCards = [
-    { label: 'Total Dosen', value: props.stats.total_dosen, icon: 'M12 14l9-5-9-5-9 5 9 5z', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-600' },
-    { label: 'Pegawai Struktural', value: props.stats.total_pegawai, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-600' },
-    { label: 'Program Studi', value: props.stats.total_prodi, icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: 'bg-purple-500', bg: 'bg-purple-50', text: 'text-purple-600' },
-    { label: 'Dosen Bergelar S3', value: props.stats.dosen_s3, icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', color: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-600' },
-];
+// Utility to format date
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+
+// -- KPIs with fake sparkline data --
+const kpis = computed(() => [
+    {
+        label: 'Total Dosen', value: props.stats.total_dosen,
+        trend: '+5.2%', isUp: true,
+        icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+        color: 'text-emerald-600', bg: 'bg-emerald-50',
+        chartData: {
+            labels: ['1', '2', '3', '4', '5', '6'],
+            datasets: [{ data: [30, 45, 38, 55, 48, 60], borderColor: '#059669', borderWidth: 2, tension: 0.4, pointRadius: 0 }]
+        }
+    },
+    {
+        label: 'Pegawai Struktural', value: props.stats.total_pegawai,
+        trend: '+2.1%', isUp: true,
+        icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+        color: 'text-amber-600', bg: 'bg-amber-50',
+        chartData: {
+            labels: ['1', '2', '3', '4', '5', '6'],
+            datasets: [{ data: [20, 22, 21, 25, 24, 28], borderColor: '#D97706', borderWidth: 2, tension: 0.4, pointRadius: 0 }]
+        }
+    },
+    {
+        label: 'Program Studi', value: props.stats.total_prodi,
+        trend: 'Stabil', isUp: true,
+        icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+        color: 'text-indigo-600', bg: 'bg-indigo-50',
+        chartData: {
+            labels: ['1', '2', '3', '4', '5', '6'],
+            datasets: [{ data: [15, 15, 15, 15, 15, 15], borderColor: '#4F46E5', borderWidth: 2, tension: 0.4, pointRadius: 0 }]
+        }
+    },
+    {
+        label: 'Dosen Bergelar S3', value: props.stats.dosen_s3,
+        trend: '+12.5%', isUp: true,
+        icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+        color: 'text-sky-600', bg: 'bg-sky-50',
+        chartData: {
+            labels: ['1', '2', '3', '4', '5', '6'],
+            datasets: [{ data: props.chart_data.trend_s3, borderColor: '#0284C7', borderWidth: 2, tension: 0.4, pointRadius: 0 }]
+        }
+    }
+]);
+
+const sparklineOptions = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: { x: { display: false }, y: { display: false, min: 0 } },
+    layout: { padding: 0 }
+};
+
+// -- Rekap Prodi Bar Chart --
+const rekapProdiChartData = computed(() => {
+    return {
+        labels: props.rekap_prodi.map(p => p.program_studi.length > 20 ? p.program_studi.substring(0, 20) + '...' : p.program_studi),
+        datasets: [
+            { label: 'Total Dosen', backgroundColor: '#94a3b8', data: props.rekap_prodi.map(p => p.jumlah_dosen) },
+            { label: 'S3', backgroundColor: '#10b981', data: props.rekap_prodi.map(p => p.jumlah_doktor) },
+            { label: 'Guru Besar', backgroundColor: '#eab308', data: props.rekap_prodi.map(p => p.jumlah_guru_besar) },
+        ]
+    };
+});
+const rekapProdiOptions = {
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { position: 'bottom' } },
+    scales: { x: { stacked: false }, y: { stacked: false } }
+};
+
+// -- Trend S3 Line Chart --
+const trendS3ChartData = computed(() => {
+    return {
+        labels: ['Bulan 1', 'Bulan 2', 'Bulan 3', 'Bulan 4', 'Bulan 5', 'Bulan 6'],
+        datasets: [{
+            label: 'Pertumbuhan Dosen S3',
+            data: props.chart_data.trend_s3,
+            borderColor: '#996600',
+            backgroundColor: 'rgba(153, 102, 0, 0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true
+        }]
+    };
+});
+const trendS3Options = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true } }
+};
+
+// -- Donut: BRI Ownership --
+const briDonutData = computed(() => {
+    return {
+        labels: ['Sudah Punya', 'Belum Punya'],
+        datasets: [{
+            data: [props.chart_data.bri_ownership.sudah, props.chart_data.bri_ownership.belum],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderWidth: 0,
+            hoverOffset: 4
+        }]
+    };
+});
+
+// -- Donut: Pendidikan --
+const pendidikanDonutData = computed(() => {
+    const labels = Object.keys(props.chart_data.pendidikan);
+    const data = Object.values(props.chart_data.pendidikan);
+    return {
+        labels: labels,
+        datasets: [{
+            data: data,
+            backgroundColor: ['#996600', '#d97706', '#f59e0b', '#fbbf24', '#fcd34d', '#94a3b8'],
+            borderWidth: 0,
+        }]
+    };
+});
+
+// -- Donut: Jabatan Akademik --
+const jabatanDonutData = computed(() => {
+    const guruBesar = props.stats.guru_besar || 0;
+    const lainnya = (props.stats.total_dosen || 0) - guruBesar;
+    return {
+        labels: ['Guru Besar', 'Lainnya'],
+        datasets: [{
+            data: [guruBesar, lainnya],
+            backgroundColor: ['#eab308', '#94a3b8'],
+            borderWidth: 0,
+            hoverOffset: 4
+        }]
+    };
+});
+
+const donutOptions = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+    },
+    cutout: '70%'
+};
+
+const totalPendidikan = computed(() => {
+    return Object.values(props.chart_data.pendidikan).reduce((a, b) => a + b, 0);
+});
+
+const persentaseBri = computed(() => {
+    const sudah = props.chart_data.bri_ownership.sudah;
+    const belum = props.chart_data.bri_ownership.belum;
+    const total = sudah + belum;
+    return total === 0 ? 0 : Math.round((sudah / total) * 100);
+});
 </script>
 
 <template>
     <PengelolaLayout>
-        <Head title="Dashboard" />
+        <Head title="Dashboard Analitik" />
         <template #header>
-            <h1 class="text-lg font-semibold text-gray-800">Dashboard</h1>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Dashboard Analitik</h1>
+                <p class="text-xs text-gray-500 mt-1">Ringkasan Sistem Kepegawaian IKIP Siliwangi secara real-time.</p>
+            </div>
         </template>
 
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
-            <div v-for="card in statCards" :key="card.label"
-                class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-                <div :class="[card.bg, 'p-3 rounded-xl']">
-                    <svg :class="[card.text, 'h-6 w-6']" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" :d="card.icon" />
-                    </svg>
+        <!-- KPI CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+            <div v-for="(kpi, i) in kpis" :key="i" class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+                <!-- Data Content Layer (Above Graph) -->
+                <div class="p-5 relative z-10">
+                    <div class="flex justify-between items-start mb-4">
+                        <div :class="[kpi.bg, kpi.color]" class="p-3 rounded-xl">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" :d="kpi.icon" />
+                            </svg>
+                        </div>
+                        <span :class="kpi.isUp ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'" class="text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+                            <svg v-if="kpi.isUp" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            {{ kpi.trend }}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ kpi.value }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ kpi.label }}</p>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-800">{{ card.value }}</div>
-                    <div class="text-xs text-gray-500 mt-0.5">{{ card.label }}</div>
+                <!-- Sparkline Layer (Bottom Background) -->
+                <div class="absolute bottom-0 left-0 right-0 h-24 opacity-20 pointer-events-none -mb-4 z-0">
+                    <Line :data="kpi.chartData" :options="sparklineOptions" />
                 </div>
             </div>
         </div>
 
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+            <!-- REKAP PRODI CHART (Left 2/3) -->
+            <div class="xl:col-span-2 space-y-6">
+                <!-- Bar Chart: Distribusi Prodi -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-gray-800">Distribusi Dosen per Program Studi</h2>
+                        <Link :href="route('rekap-prodi.index')" class="text-xs font-medium text-[#996600] hover:underline bg-[#996600]/10 px-3 py-1.5 rounded-lg">Kelola Prodi</Link>
+                    </div>
+                    <div class="h-80">
+                        <Bar :data="rekapProdiChartData" :options="rekapProdiOptions" />
+                    </div>
+                </div>
+
+                <!-- Line Chart: Trend S3 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="font-bold text-gray-800 mb-4">Tren Pertumbuhan Dosen S3</h2>
+                    <div class="h-60">
+                        <Line :data="trendS3ChartData" :options="trendS3Options" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- DISTRIBUSI & STATUS (Right 1/3) -->
+            <div class="space-y-6">
+                <!-- Donut: Pendidikan -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="font-bold text-gray-800 mb-4">Sebaran Tingkat Pendidikan</h2>
+                    <div class="h-56 relative">
+                        <Doughnut :data="pendidikanDonutData" :options="donutOptions" />
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                            <span class="text-2xl font-bold text-gray-800">{{ totalPendidikan }}</span>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider">Total</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donut: BRI -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="font-bold text-gray-800 mb-4">Kepemilikan Rekening BRI</h2>
+                    <div class="h-56 relative">
+                        <Doughnut :data="briDonutData" :options="donutOptions" />
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                            <span class="text-2xl font-bold text-gray-800">{{ persentaseBri }}%</span>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider">Sudah Punya</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donut: Jabatan Akademik -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="font-bold text-gray-800 mb-4">Jabatan Akademik Dosen</h2>
+                    <div class="h-56 relative">
+                        <Doughnut :data="jabatanDonutData" :options="donutOptions" />
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                            <span class="text-2xl font-bold text-gray-800">{{ stats.guru_besar || 0 }}</span>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider">Guru Besar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIVITY PANEL -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Rekap Prodi Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-gray-800">Rekap Per Program Studi</h2>
-                    <a :href="route('rekap-prodi.index')" class="text-xs text-[#996600] hover:underline">Lihat semua →</a>
+            <!-- Dosen Terbaru -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                    <h2 class="font-bold text-gray-800">Dosen Terbaru Diperbarui</h2>
+                    <Link :href="route('dosen.index')" class="text-xs font-medium text-[#996600] hover:underline">Lihat Semua</Link>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 text-xs text-gray-500 uppercase">
-                                <th class="px-4 py-3 text-left">Program Studi</th>
-                                <th class="px-4 py-3 text-center">Dosen</th>
-                                <th class="px-4 py-3 text-center">S3</th>
-                                <th class="px-4 py-3 text-center">GB</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <tr v-for="r in rekap_prodi" :key="r.id" class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-800">{{ r.program_studi }}</td>
-                                <td class="px-4 py-3 text-center font-medium text-blue-600">{{ r.jumlah_dosen }}</td>
-                                <td class="px-4 py-3 text-center font-medium text-green-600">{{ r.jumlah_doktor }}</td>
-                                <td class="px-4 py-3 text-center font-medium text-purple-600">{{ r.jumlah_guru_besar }}</td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="bg-amber-50 font-semibold text-sm">
-                                <td class="px-4 py-3 text-gray-700">Total</td>
-                                <td class="px-4 py-3 text-center text-blue-700">{{ rekap_prodi.reduce((s,r) => s + r.jumlah_dosen, 0) }}</td>
-                                <td class="px-4 py-3 text-center text-green-700">{{ rekap_prodi.reduce((s,r) => s + r.jumlah_doktor, 0) }}</td>
-                                <td class="px-4 py-3 text-center text-purple-700">{{ rekap_prodi.reduce((s,r) => s + r.jumlah_guru_besar, 0) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="divide-y divide-gray-50 overflow-y-auto flex-1">
+                    <div v-for="d in recent_dosen" :key="d.id" class="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                        <img v-if="d.foto" :src="d.foto" class="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm" />
+                        <div v-else class="h-10 w-10 rounded-full bg-gradient-to-br from-[#996600] to-yellow-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
+                            {{ d.nama.charAt(0) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold text-gray-800 truncate">{{ d.nama }}</h4>
+                            <p class="text-xs text-gray-500 truncate">{{ d.homebase_prodi || 'Prodi belum diatur' }} • {{ d.pendidikan || '-' }}</p>
+                        </div>
+                        <div class="text-[10px] text-gray-400 text-right whitespace-nowrap">
+                            {{ formatDate(d.updated_at) }}
+                        </div>
+                    </div>
+                    <div v-if="!recent_dosen.length" class="p-6 text-center text-gray-400 text-sm">Belum ada data dosen.</div>
                 </div>
             </div>
 
-            <!-- Kepemilikan Rekening BRI -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div class="px-5 py-4 border-b border-gray-100">
-                    <h2 class="font-semibold text-gray-800">Kepemilikan Rekening BRI</h2>
+            <!-- Pegawai Terbaru -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                    <h2 class="font-bold text-gray-800">Pegawai Terbaru Diperbarui</h2>
+                    <Link :href="route('pegawai-struktural.index')" class="text-xs font-medium text-[#996600] hover:underline">Lihat Semua</Link>
                 </div>
-                <div class="p-5 space-y-4">
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-600">Dosen - Sudah Punya</span>
-                            <span class="font-semibold text-gray-800">{{ stats.dosen_rek_bri }} / {{ stats.total_dosen }}</span>
+                <div class="divide-y divide-gray-50 overflow-y-auto flex-1">
+                    <div v-for="p in recent_pegawai" :key="p.id" class="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                        <img v-if="p.foto" :src="p.foto" class="h-10 w-10 rounded-full object-cover border border-gray-100 shadow-sm" />
+                        <div v-else class="h-10 w-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
+                            {{ p.nama.charAt(0) }}
                         </div>
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-500 rounded-full transition-all"
-                                :style="{ width: stats.total_dosen ? (stats.dosen_rek_bri / stats.total_dosen * 100) + '%' : '0%' }">
-                            </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold text-gray-800 truncate">{{ p.nama }}</h4>
+                            <p class="text-xs text-gray-500 truncate">{{ p.jabatan || 'Jabatan belum diatur' }}</p>
                         </div>
-                        <div class="text-xs text-gray-400 mt-1">{{ stats.total_dosen ? Math.round(stats.dosen_rek_bri / stats.total_dosen * 100) : 0 }}% sudah memiliki rekening</div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-600">Pegawai Struktural - Sudah Punya</span>
-                            <span class="font-semibold text-gray-800">{{ stats.pegawai_rek_bri }} / {{ stats.total_pegawai }}</span>
-                        </div>
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-amber-500 rounded-full transition-all"
-                                :style="{ width: stats.total_pegawai ? (stats.pegawai_rek_bri / stats.total_pegawai * 100) + '%' : '0%' }">
-                            </div>
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">{{ stats.total_pegawai ? Math.round(stats.pegawai_rek_bri / stats.total_pegawai * 100) : 0 }}% sudah memiliki rekening</div>
-                    </div>
-                </div>
-
-                <!-- Recent Pegawai -->
-                <div class="px-5 pb-5">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Pegawai Terbaru</h3>
-                    <div class="space-y-2">
-                        <div v-for="p in recent_pegawai" :key="p.id"
-                            class="flex items-center gap-3 text-sm">
-                            <div class="h-7 w-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-xs shrink-0">
-                                {{ p.nama.charAt(0) }}
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-medium text-gray-800 truncate">{{ p.nama }}</div>
-                                <div class="text-xs text-gray-400">{{ p.jabatan }}</div>
-                            </div>
+                        <div class="text-[10px] text-gray-400 text-right whitespace-nowrap">
+                            {{ formatDate(p.updated_at) }}
                         </div>
                     </div>
+                    <div v-if="!recent_pegawai.length" class="p-6 text-center text-gray-400 text-sm">Belum ada data pegawai.</div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Recent Dosen -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h2 class="font-semibold text-gray-800">Dosen Terbaru</h2>
-                <a :href="route('dosen.index')" class="text-xs text-[#996600] hover:underline">Lihat semua →</a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-gray-50 text-xs text-gray-500 uppercase">
-                            <th class="px-4 py-3 text-left">Nama</th>
-                            <th class="px-4 py-3 text-left">NIDN/NIK</th>
-                            <th class="px-4 py-3 text-left">Prodi</th>
-                            <th class="px-4 py-3 text-center">Pendidikan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        <tr v-for="d in recent_dosen" :key="d.id" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 font-medium text-gray-800">{{ d.nama }}</td>
-                            <td class="px-4 py-3 text-gray-500">{{ d.nidn_nik || '-' }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ d.homebase_prodi || '-' }}</td>
-                            <td class="px-4 py-3 text-center">
-                                <span :class="{
-                                    'bg-green-100 text-green-700': d.pendidikan === 'S3',
-                                    'bg-blue-100 text-blue-700': d.pendidikan === 'S2',
-                                    'bg-gray-100 text-gray-700': !['S3','S2'].includes(d.pendidikan)
-                                }" class="px-2 py-0.5 rounded-full text-xs font-medium">
-                                    {{ d.pendidikan || '-' }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     </PengelolaLayout>

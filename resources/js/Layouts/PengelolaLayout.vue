@@ -78,7 +78,7 @@ const isActive = (href) => {
         <!-- Main Content -->
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+            <header class="bg-white shadow-sm border-b border-gray-200">
                 <div class="flex items-center justify-between h-14 px-4 sm:px-6">
                     <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-500 hover:text-gray-700">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
