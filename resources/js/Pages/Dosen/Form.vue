@@ -45,8 +45,10 @@ const onFileChange = (e) => {
 
 const submit = () => {
     if (isEdit) {
-        form.post(route('dosen.update', props.dosen.id), {
-            method: 'patch',
+        form.transform((data) => ({
+            ...data,
+            _method: 'patch',
+        })).post(route('dosen.update', props.dosen.id), {
             forceFormData: true,
         });
     } else {

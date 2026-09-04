@@ -39,8 +39,10 @@ const onFileChange = (e) => {
 
 const submit = () => {
     if (isEdit) {
-        form.post(route('pegawai-struktural.update', props.pegawai.id), {
-            method: 'patch',
+        form.transform((data) => ({
+            ...data,
+            _method: 'patch',
+        })).post(route('pegawai-struktural.update', props.pegawai.id), {
             forceFormData: true,
         });
     } else {
